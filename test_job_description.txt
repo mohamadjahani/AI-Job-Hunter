@@ -1,0 +1,102 @@
+Full job description
+PCe Solutions
+
+Building on years of corporate IT experience, we launched PCe Solutions in 2010 to bring enterprise-class skills and technology to small and medium-size businesses. Years later, we continue to provide professional, friendly IT support and proven, electronic solutions to our clients.
+
+We understand how crucial it is to consistently meet the current and evolving technical demands of the businesses we support. Our success comes, in part, from working closely with our clients to deploy solutions that meet current needs but are flexible enough to accommodate future growth and changing business demands.
+
+We believe that each client is our partner, and we work with them to make affordable quality IT service and support our mutual goals. Our team of friendly, experienced, and reliable IT professionals are just a visit, call, email, or instant message away. We are always working behind the scenes to ensure the operational excellence of their tools and systems so that they achieve the highest levels of productivity.
+
+As a full-time Senior Systems Administrator, you will be part of a team that provides both remote and onsite client support to multiple customers in the Edmonton area with a wide range of IT needs. Your day will consist of maintenance, configuration, installation and troubleshooting an array of client workstations, network infrastructure, software, servers and client consultations.
+
+You will be accountable for:
+
+Providing Support to our clients within Calgary, Edmonton, Toronto, Vancouver, Tampa (remotely or on location as required)
+Proactively maintaining clients’ network environments
+Maintaining and troubleshooting network devices and servers
+Responding and resolving service support tickets in an effective and timely manner
+Deploying various technical solutions
+Creating and maintaining network documentation, standards, and procedures
+Staying current with the latest technologies
+Tracking performance and keep systems up to date as needed
+On call rotation
+To be successful in this role you must:
+
+Possess a Certificate or Diploma in a related technical field (or industry experience equivalence)
+Have 5 years’ experience in a similar role as a tier 1/2/3 support
+Have worked in a multi-site environment
+Be Customer Service Focused - Provide an above and beyond customer experience to our clients
+Have Excellent oral and written communication skills in English
+Be a self-starter with the ability to learn and adapt quickly
+Must also be able to work independently or within a group on collaborative projects
+Possess the willingness to work in a fast-paced environment and able to work with minimal supervision with a collaborative team
+A strong technical understanding of information systems to address issues that arise
+Qualifications/Core Competencies:
+
+Minimum of five years of network and server experience
+Experience with Microsoft 365 Administration (tenant, Exchange, SharePoint, OneDrive, Teams)
+Experience with Virtualization technologies in a live production environment; including public cloud (ESXi, VMWare, Hyper-V)
+Experience with Active Directory (including Azure AD), Intune, Group Policy
+Experience with Microsoft Windows, Mac OS 10.x, and Server OS
+TCP/IP Networking Fundamentals
+Microsoft Exchange (2010 – Present)
+Various Smart Phone Operating Systems (Android, Apple iOS, Windows Phone)
+Wireless Networking/Security Protocols
+Email Protocols (POP/IMAP/Exchange/ActiveSync)
+VMWare/HyperV, virtual machine administration and provisioning
+Network, Computer and End user security
+Additional Complementary or Beneficial Skills:
+
+CompTIA (A+, Network+, Server+, Linux+)
+Cisco (CCNA, CCNP, CCDA, etc.)
+Microsoft (MCSE, MCITP, MCTS)
+VMware (VCP, VCAP, VCDX)
+VMware (VCP, VCAP, VCDX) VOIP/IP Telephony/ Digital/Analog Telephony Systems
+Apple/Mac Server
+VOIP/IP Telephony/ Digital/Analog Telephony Systems
+Linux/Unix Systems
+Mac OS X and Mac Server
+Web Development
+Smart Phone Software Development
+Web Server Administration
+Cloud Services
+Cisco Networking
+Microsoft Azure Certification and/or Experience
+Amazon AWS Certification or Experience
+Benefits:
+
+Hybrid work environment - work from Home, Office, or site visits in the Edmonton area
+A competitive salary & benefits program (Health, Dental, Vision)
+Regular performance-based bonuses
+Fantastic work community
+Education assistance
+Employee assistance program
+2 weeks’ vacation to start with the opportunity to increase with tenure
+Opportunities for career advancement based on performance
+Pre-employment Requirements
+
+An enhanced security clearance and background check will be conducted
+Personality/Workstyle assessment will be conducted during the interview process
+How to Apply
+
+Applicants should send a resume and cover letter outlining how they meet the specific requirements of the position
+All applicants must be legally entitled to work in Canada
+While we sincerely appreciate all applications, only those candidates selected for interview will be contacted.
+
+Job Type: Full-time
+
+Pay: $50,000.00-$85,000.00 per year
+
+Benefits:
+
+Dental care
+Employee assistance program
+Extended health care
+Paid time off
+Vision care
+Work from home
+Application question(s):
+
+Have you previously been employed by PCe?
+Work Location: In person
+

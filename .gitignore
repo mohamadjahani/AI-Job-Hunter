@@ -1,0 +1,56 @@
+
+# Credentials and secrets
+secrets/
+.env
+.env.*
+**/.env
+**/.env.*
+token.json
+**/token.json
+credentials.json
+**/credentials.json
+*credentials*.json
+*secret*.json
+*.pem
+*.key
+
+# Python environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Personal resumes and private documents
+resume/*.pdf
+resume/*.docx
+resume/*.doc
+resume/*.txt
+
+# Generated AI outputs and cached evidence
+outputs/
+**/evidence_cache/
+
+# Local configuration
+config/*.env
+config/*credentials*
+config/*secret*
+config/*token*
+
+# Temporary and backup files
+*~
+*.bak
+*.backup
+*.swp
+*.swo
+*_backup.py
+
+# Operating system and editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log

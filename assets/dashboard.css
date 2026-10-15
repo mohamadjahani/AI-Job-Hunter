@@ -1,0 +1,315 @@
+
+/* AI JOB HUNTER — LIGHT PROFESSIONAL THEME */
+
+:root {
+    --page: #f0f5ff;
+    --surface: #ffffff;
+    --surface-soft: #f7faff;
+    --primary: #155eef;
+    --primary-hover: #1047bb;
+    --heading: #101f43;
+    --body: #344563;
+    --muted: #586985;
+    --border: #dce6f6;
+    --success: #087f55;
+    --danger: #c52c39;
+}
+
+html,
+body,
+[data-testid="stApp"],
+.stApp {
+    background: linear-gradient(
+        135deg,
+        #f7faff 0%,
+        #edf4ff 52%,
+        #f4f7ff 100%
+    ) !important;
+    color: var(--body) !important;
+}
+
+[data-testid="stHeader"] {
+    background: rgba(247, 250, 255, 0.95) !important;
+}
+
+.block-container {
+    max-width: 1280px !important;
+    padding-top: 2rem !important;
+    padding-bottom: 4rem !important;
+}
+
+/* General typography */
+
+.stApp h1,
+.stApp h2,
+.stApp h3,
+.stApp h4,
+.stApp h5,
+.stApp p,
+.stApp label,
+.stApp span {
+    color: inherit;
+}
+
+.stApp h1,
+.stApp h2,
+.stApp h3,
+.stApp h4 {
+    color: var(--heading) !important;
+}
+
+.stApp p,
+.stApp label {
+    color: var(--body);
+}
+
+/* Hero */
+
+.hero {
+    background: linear-gradient(
+        115deg,
+        #ffffff 0%,
+        #f1f6ff 65%,
+        #e4efff 100%
+    ) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 22px !important;
+    padding: 32px 36px !important;
+    box-shadow: 0 10px 30px rgba(30, 72, 140, 0.07);
+}
+
+.hero-title {
+    color: var(--heading) !important;
+    font-size: 35px !important;
+    font-weight: 800 !important;
+}
+
+.hero-subtitle {
+    color: var(--muted) !important;
+    font-size: 15px !important;
+}
+
+.section-title {
+    color: var(--heading) !important;
+    font-size: 23px !important;
+    font-weight: 750 !important;
+    margin-top: 24px !important;
+}
+
+/* Job cards */
+
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 7px 25px rgba(25, 65, 130, 0.045);
+}
+
+.job-heading {
+    color: var(--heading) !important;
+    font-size: 22px !important;
+    font-weight: 750 !important;
+}
+
+.job-meta {
+    color: var(--muted) !important;
+}
+
+.status-pill {
+    background: #eaf2ff !important;
+    border: 1px solid #c9ddff !important;
+    color: #1456c0 !important;
+    border-radius: 999px !important;
+}
+
+/* Metrics */
+
+[data-testid="stMetric"] {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 17px !important;
+    padding: 20px 24px !important;
+    box-shadow: 0 6px 20px rgba(25, 65, 130, 0.04);
+}
+
+[data-testid="stMetricLabel"] *,
+[data-testid="stMetricLabel"] {
+    color: var(--muted) !important;
+}
+
+[data-testid="stMetricValue"] *,
+[data-testid="stMetricValue"] {
+    color: var(--primary) !important;
+    font-weight: 800 !important;
+}
+
+/* Buttons */
+
+.stButton button[kind="primary"] {
+    background: var(--primary) !important;
+    border: 1px solid var(--primary) !important;
+    color: white !important;
+    border-radius: 11px !important;
+    font-weight: 650 !important;
+}
+
+.stButton button[kind="primary"]:hover {
+    background: var(--primary-hover) !important;
+}
+
+.stButton button[kind="primary"] p,
+.stButton button[kind="primary"] span {
+    color: white !important;
+}
+
+.stButton button,
+.stLinkButton a {
+    border-radius: 11px !important;
+}
+
+/* Expanders */
+
+[data-testid="stExpander"] {
+    background: #f9fbff !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 14px !important;
+    overflow: hidden;
+}
+
+[data-testid="stExpander"] summary {
+    background: #edf4ff !important;
+    color: var(--heading) !important;
+    font-weight: 650 !important;
+}
+
+[data-testid="stExpander"] summary * {
+    color: var(--heading) !important;
+}
+
+/* Inputs and labels */
+
+[data-testid="stRadio"] label,
+[data-testid="stCheckbox"] label,
+[data-testid="stRadio"] p,
+[data-testid="stCheckbox"] p {
+    color: var(--heading) !important;
+}
+
+[data-testid="stTextArea"] textarea {
+    background: #ffffff !important;
+    color: var(--heading) !important;
+    border: 1px solid #cbd9ee !important;
+    border-radius: 12px !important;
+}
+
+/* Captions */
+
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] * {
+    color: var(--muted) !important;
+}
+
+/* Persian GPT report */
+
+.persian-report {
+    direction: rtl !important;
+    text-align: right !important;
+    background: #ffffff !important;
+    color: #243450 !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 18px !important;
+    padding: 26px 32px !important;
+    font-family:
+        Tahoma,
+        Arial,
+        sans-serif !important;
+    font-size: 15px !important;
+    line-height: 1.9 !important;
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+}
+
+.persian-report h1,
+.persian-report h2,
+.persian-report h3,
+.persian-report h4 {
+    color: #174db0 !important;
+    direction: rtl !important;
+    text-align: right !important;
+    margin: 18px 0 8px !important;
+    line-height: 1.5 !important;
+}
+
+.persian-report p {
+    color: #243450 !important;
+    direction: rtl !important;
+    text-align: right !important;
+    margin: 5px 0 10px !important;
+    line-height: 1.9 !important;
+}
+
+.persian-report ul,
+.persian-report ol {
+    direction: rtl !important;
+    text-align: right !important;
+    padding-right: 25px !important;
+    padding-left: 0 !important;
+    margin: 6px 0 12px !important;
+}
+
+.persian-report li {
+    color: #243450 !important;
+    direction: rtl !important;
+    text-align: right !important;
+    margin: 3px 0 !important;
+}
+
+.persian-report li p {
+    margin: 2px 0 !important;
+}
+
+.persian-report strong {
+    color: #122b59 !important;
+}
+
+.persian-report code {
+    direction: ltr;
+    unicode-bidi: isolate;
+    background: #eaf2ff !important;
+    color: #174db0 !important;
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+
+.persian-report table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.persian-report th,
+.persian-report td {
+    border: 1px solid var(--border);
+    padding: 9px;
+    text-align: right;
+    color: #243450 !important;
+}
+
+/* Responsive layout */
+
+@media (max-width: 768px) {
+    .block-container {
+        padding: 1rem !important;
+    }
+
+    .hero {
+        padding: 22px !important;
+    }
+
+    .hero-title {
+        font-size: 27px !important;
+    }
+
+    .persian-report {
+        padding: 18px !important;
+    }
+}
