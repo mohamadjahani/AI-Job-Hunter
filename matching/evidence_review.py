@@ -1,22 +1,41 @@
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-EVIDENCE_FILE = (
-    BASE_DIR / "outputs" / "PCe_EVIDENCE_MAP.json"
-)
+EVIDENCE_FILE = BASE_DIR / "outputs" / "PCe_EVIDENCE_MAP.json"
+REVIEW_FILE = BASE_DIR / "outputs" / "PCe_EVIDENCE_REVIEW.json"
+APPROVED_FILE = BASE_DIR / "outputs" / "PCe_APPROVED_EVIDENCE.json"
 
-REVIEW_FILE = (
-    BASE_DIR / "outputs" / "PCe_EVIDENCE_REVIEW.json"
-)
+VALID_MATCHES = {"direct", "related", "not_verified"}
 
-APPROVED_FILE = (
-    BASE_DIR / "outputs" / "PCe_APPROVED_EVIDENCE.json"
-)
+HIGH_RISK_PATTERNS = [
+    r"\b\d+\+?\s+years?\b",
+    r"\bcertif(?:ied|ication|ications)\b",
+    r"\bactive directory\b",
+    r"\bmicrosoft 365\b",
+    r"\bazure\b",
+    r"\baws\b",
+    r"\bserver administration\b",
+    r"\bvmware\b",
+    r"\bcisco\b",
+    r"\bmanage(?:d|ment|s)?\b",
+    r"\badminist(?:er|ered|ration|rator)\b",
+]
+
+
+def read_json(path):
+    with path.open(encoding="utf-8") as file:
+        return json.load(file)
+
+
+def write_json(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=2)
 
 
 def load_evidence():
@@ -25,66 +44,109 @@ def load_evidence():
             f"Evidence map not found: {EVIDENCE_FILE}"
         )
 
-    with EVIDENCE_FILE.open(encoding="utf-8") as f:
-        data = json.load(f)
+    data = read_json(EVIDENCE_FILE)
 
-    requirements = data.get("requirements", [])
-
-    if not isinstance(requirements, list):
+    if not isinstance(data.get("requirements"), list):
         raise ValueError("Invalid requirements format.")
 
     return data
 
 
-def create_review():
-    data = load_evidence()
+def is_high_risk(item):
+    text = " ".join([
+        str(item.get("requirement", "")),
+        str(item.get("unsupported_scope", "")),
+    ]).lower()
 
-    review = {
-        "job_title": data.get("job_title", ""),
-        "review_status": "pending",
-        "requirements": [],
-    }
-
-    for index, item in enumerate(
-        data["requirements"], start=1
-    ):
-        match = item.get("match", "not_verified")
-
-        review["requirements"].append({
-            "id": index,
-            "requirement": item.get("requirement", ""),
-            "original_match": match,
-            "reviewed_match": match,
-            "resume_evidence": item.get(
-                "resume_evidence", ""
-            ),
-            "supported_scope": item.get(
-                "supported_scope", ""
-            ),
-            "unsupported_scope": item.get(
-                "unsupported_scope", ""
-            ),
-            "explanation_fa": item.get(
-                "explanation_fa", ""
-            ),
-            "approved": False,
-            "review_note": "",
-        })
-
-    REVIEW_FILE.parent.mkdir(
-        parents=True, exist_ok=True
+    return any(
+        re.search(pattern, text)
+        for pattern in HIGH_RISK_PATTERNS
     )
 
-    with REVIEW_FILE.open(
-        "w", encoding="utf-8"
-    ) as f:
-        json.dump(
-            review,
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
 
+def classify_review_priority(item):
+    match = item.get("reviewed_match", "not_verified")
+    evidence = str(item.get("resume_evidence", "")).strip()
+
+    if match == "not_verified" or not evidence:
+        return "excluded"
+
+    if match == "related":
+        return "needs_review"
+
+    if is_high_risk(item):
+        return "needs_review"
+
+    return "standard"
+
+
+def create_review():
+    evidence = load_evidence()
+
+    existing = {}
+    if REVIEW_FILE.exists():
+        old_review = read_json(REVIEW_FILE)
+        existing = {
+            item.get("requirement"): item
+            for item in old_review.get("requirements", [])
+        }
+
+    requirements = []
+
+    for index, source in enumerate(
+        evidence["requirements"], start=1
+    ):
+        requirement = source.get("requirement", "")
+        match = source.get("match", "not_verified")
+
+        if match not in VALID_MATCHES:
+            match = "not_verified"
+
+        item = {
+            "id": index,
+            "requirement": requirement,
+            "original_match": match,
+            "reviewed_match": match,
+            "resume_evidence": source.get("resume_evidence", ""),
+            "supported_scope": source.get("supported_scope", ""),
+            "unsupported_scope": source.get("unsupported_scope", ""),
+            "explanation_fa": source.get("explanation_fa", ""),
+            "approved": False,
+            "review_note": "",
+        }
+
+        previous = existing.get(requirement)
+
+        # Preserve approval only when the evidence is unchanged.
+        if previous and all(
+            previous.get(key) == item.get(key)
+            for key in (
+                "original_match",
+                "resume_evidence",
+                "supported_scope",
+                "unsupported_scope",
+            )
+        ):
+            item["reviewed_match"] = previous.get(
+                "reviewed_match", match
+            )
+            item["approved"] = previous.get("approved") is True
+            item["review_note"] = previous.get("review_note", "")
+
+        item["review_priority"] = classify_review_priority(item)
+
+        if item["review_priority"] == "excluded":
+            item["approved"] = False
+
+        requirements.append(item)
+
+    review = {
+        "job_title": evidence.get("job_title", ""),
+        "review_status": "pending",
+        "requirements": requirements,
+    }
+
+    write_json(REVIEW_FILE, review)
     return review
 
 
@@ -92,20 +154,32 @@ def load_review():
     if not REVIEW_FILE.exists():
         return create_review()
 
-    with REVIEW_FILE.open(encoding="utf-8") as f:
-        return json.load(f)
+    return read_json(REVIEW_FILE)
 
 
 def save_review(data):
-    with REVIEW_FILE.open(
-        "w", encoding="utf-8"
-    ) as f:
-        json.dump(
-            data,
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
+    requirements = data.get("requirements")
+
+    if not isinstance(requirements, list):
+        raise ValueError("Invalid review requirements.")
+
+    for item in requirements:
+        match = item.get("reviewed_match", "not_verified")
+
+        if match not in VALID_MATCHES:
+            raise ValueError("Invalid reviewed match.")
+
+        evidence = str(item.get("resume_evidence", "")).strip()
+
+        if item.get("approved") is True:
+            if match == "not_verified" or not evidence:
+                raise ValueError(
+                    "Cannot approve unsupported evidence."
+                )
+
+        item["review_priority"] = classify_review_priority(item)
+
+    write_json(REVIEW_FILE, data)
 
 
 def approve_requirement(
@@ -114,21 +188,14 @@ def approve_requirement(
     approved,
     note="",
 ):
-    valid_matches = {
-        "direct",
-        "related",
-        "not_verified",
-    }
-
-    if reviewed_match not in valid_matches:
+    if reviewed_match not in VALID_MATCHES:
         raise ValueError("Invalid reviewed match.")
 
     data = load_review()
 
     target = next(
         (
-            item
-            for item in data["requirements"]
+            item for item in data["requirements"]
             if item["id"] == requirement_id
         ),
         None,
@@ -139,19 +206,8 @@ def approve_requirement(
             f"Requirement ID {requirement_id} not found."
         )
 
-    if (
-        reviewed_match != "not_verified"
-        and not target["resume_evidence"].strip()
-    ):
-        raise ValueError(
-            "Cannot approve a match without evidence."
-        )
-
     target["reviewed_match"] = reviewed_match
-    target["approved"] = (
-        bool(approved)
-        and reviewed_match != "not_verified"
-    )
+    target["approved"] = bool(approved)
     target["review_note"] = note
 
     save_review(data)
@@ -166,30 +222,18 @@ def export_approved_evidence():
         for item in data["requirements"]
         if (
             item.get("approved") is True
-            and item.get("reviewed_match")
-            in {"direct", "related"}
-            and item.get("resume_evidence", "").strip()
+            and item.get("reviewed_match") in {"direct", "related"}
+            and str(item.get("resume_evidence", "")).strip()
         )
     ]
 
     export = {
-        "job_title": data["job_title"],
-        "exported_at": datetime.now(
-            timezone.utc
-        ).isoformat(),
+        "job_title": data.get("job_title", ""),
+        "exported_at": datetime.now(timezone.utc).isoformat(),
         "approval_status": "human_reviewed",
         "approved_count": len(approved_items),
         "requirements": approved_items,
     }
 
-    with APPROVED_FILE.open(
-        "w", encoding="utf-8"
-    ) as f:
-        json.dump(
-            export,
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
-
+    write_json(APPROVED_FILE, export)
     return export
