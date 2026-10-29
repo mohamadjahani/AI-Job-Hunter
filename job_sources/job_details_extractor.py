@@ -17,6 +17,14 @@ def extract_job_details(html_content):
         if not title:
             continue
 
+        # Skip Indeed job-alert summary headings
+        if re.match(
+            r"^\d+\s+new\s+.+\s+jobs?\b",
+            title,
+            flags=re.IGNORECASE,
+        ):
+            continue
+
         container = heading
 
         for _ in range(6):

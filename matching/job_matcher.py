@@ -8,7 +8,19 @@ ROLE_KEYWORDS = {
     "IT Operations": 80,
     "Data Center": 90,
     "Systems Administrator": 70,
+    "System Administrator": 70,
     "Network Administrator": 65,
+    "IT Technician": 85,
+    "Desktop Support": 90,
+    "Technical Support": 80,
+    "Support Technician": 85,
+    "IT Systems": 80,
+    "Computer Technician": 80,
+    "Field Service Technician": 75,
+    "IT Coordinator": 85,
+    "Junior IT Analyst": 90,
+    "IT Analyst": 80,
+    "Infrastructure Technician": 80,
 }
 
 def match_jobs(jobs, target_roles=None):

@@ -1,16 +1,16 @@
-
 import re
 
 from resume.resume_parser import extract_resume_text
 
 
 SECTION_NAMES = [
-    "PROFESSIONAL SUMMARY",
-    "TECHNICAL SKILLS",
-    "EDUCATION & CERTIFICATES",
-    "CYBERSECURITY TRAINING & APPLIED PROJECTS",
+    "PROFESSIONAL PROFILE",
     "PROFESSIONAL EXPERIENCE",
-    "LANGUAGES",
+    "EDUCATION",
+    "CYBERSECURITY EDUCATION",
+    "TECHNICAL & PROFESSIONAL SKILLS",
+    "SELECTED RECOGNITION",
+    "SELECTED PROFESSIONAL TRAINING",
 ]
 
 
@@ -51,9 +51,7 @@ def build_resume_profile():
             else len(text)
         )
 
-        content = text[start:end].strip()
-
-        profile["sections"][section_name] = content
+        profile["sections"][section_name] = text[start:end].strip()
 
     return profile
 
