@@ -1,3 +1,5 @@
+import re
+
 from config.settings import (
     ALLOWED_CITIES,
     ALLOW_REMOTE_CANADA,
@@ -7,15 +9,42 @@ from config.settings import (
 
 def check_job_location(job):
     location = (job.get("location") or "").strip().lower()
+    title = (job.get("title") or "").strip().lower()
 
-    if not location:
+    combined = f"{title} {location}"
+
+    # Explicit US-only remote restrictions
+    us_only = re.search(
+        r"\b(?:us|usa|united states)[\s-]*only\b"
+        r"|\bonly[\s-]*(?:us|usa|united states)\b"
+        r"|\bremote[\s-]*(?:us|usa|united states)\b",
+        combined,
+    )
+
+    if us_only:
+        return "rejected"
+
+    # Check whether the location is in our allowed cities
+    local = any(
+        re.search(
+            rf"\b{re.escape(city.lower())}\b",
+            location,
+        )
+        for city in ALLOWED_CITIES
+    )
+
+    # Hybrid work outside the allowed cities
+    if "hybrid" in combined and not local:
+        return "rejected"
+
+    if local:
+        return "accepted"
+
+    # Remote opportunities require eligibility review
+    if "remote" in combined and ALLOW_REMOTE_CANADA:
         return "manual_review"
 
-    for city in ALLOWED_CITIES:
-        if city.lower() in location:
-            return "accepted"
-
-    if "remote" in location and ALLOW_REMOTE_CANADA:
+    if not location:
         return "manual_review"
 
     if UNKNOWN_LOCATION_POLICY == "manual_review":
