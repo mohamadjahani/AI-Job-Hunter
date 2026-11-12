@@ -3,7 +3,6 @@
 **AI-Powered Job Search, Matching & Resume Tailoring Assistant**
 
 A Python-based application designed to streamline job discovery, evaluate job requirements against verified resume evidence, and support responsible, human-reviewed resume tailoring.
-
 ## Overview
 
 AI Job Hunter combines job discovery, Gmail job-alert processing, AI-assisted job analysis, and resume evidence validation in a Streamlit interface.
@@ -19,6 +18,7 @@ The project follows a **human-in-the-loop** approach: AI-generated recommendatio
 - **Evidence Validation:** Check whether quoted evidence appears in the original resume.
 - **Human Review:** Approve, reject, or reclassify evidence through a Streamlit review interface.
 - **Resume Tailoring:** Generate draft resumes for individual job descriptions.
+- **PDF Export:** Generate downloadable PDF resumes from tailored resume drafts using ReportLab.
 - **Privacy Controls:** Exclude credentials, personal resumes, and generated outputs from version control.
 
 ## Technology Stack
@@ -31,6 +31,9 @@ The project follows a **human-in-the-loop** approach: AI-generated recommendatio
 - JSON-based evidence mapping and review
 
 ## Project Workflow
+The project workflow is documented with Mermaid diagrams.
+
+**[View Project Workflow Diagram](docs/workflow.md)**
 
 1. Collect job opportunities.
 2. Retrieve and analyze job descriptions.
