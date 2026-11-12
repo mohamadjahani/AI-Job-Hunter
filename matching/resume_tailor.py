@@ -1,13 +1,13 @@
 
 import os
 import re
+import hashlib
 from pathlib import Path
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from resume.resume_profile import build_resume_profile
-from matching.approved_evidence_loader import load_approved_evidence
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,61 +17,44 @@ load_dotenv(BASE_DIR / "secrets" / ".env")
 TAILORING_INSTRUCTIONS = """
 You are an expert Canadian ATS resume editor.
 
-Tailor an existing resume for a specific job using only verified
-resume facts and the human-approved evidence supplied.
+Tailor the original resume to the supplied job description.
 
 STRICT RULES:
-
-1. Use ONLY verified facts from the original resume.
-2. Human-approved evidence defines the permitted scope of
-   job-specific claims. Never expand beyond supported_scope.
-3. Do not use unsupported_scope as candidate experience.
-4. Never invent skills, experience, certifications,
-   responsibilities, achievements, or employment dates.
-5. Preserve all employers, job titles, dates, and education.
-6. Rewrite existing bullet points for relevance and clarity.
-7. Prioritize relevant verified skills without exaggeration.
-8. Do not present training as professional work experience.
-9. Never claim expertise in technologies absent from the resume.
-10. Do not omit important employment history.
-11. Use professional Canadian English.
-12. Do not generate the candidate's name or contact header.
-13. Do not invent a new professional headline.
-14. Treat job requirements as employer expectations,
-    not evidence of the candidate's experience.
-15. Return ONLY the resume body in Markdown.
+1. Use ONLY facts explicitly supported by the original resume.
+2. Never invent skills, work experience, achievements, metrics,
+   certifications, employment dates, or responsibilities.
+3. Job requirements are NOT evidence of candidate experience.
+4. Preserve employers, job titles, dates, and education.
+5. Highlight relevant experience and transferable skills.
+6. Do not present training as professional work experience.
+7. Use clear professional Canadian English.
+8. Do not generate the candidate's name or contact header.
+9. Return ONLY the resume body in Markdown.
 
 Required sections:
-
 # PROFESSIONAL SUMMARY
 # TECHNICAL SKILLS
 # EDUCATION & CERTIFICATES
 # CYBERSECURITY TRAINING & APPLIED PROJECTS
 # PROFESSIONAL EXPERIENCE
+
+Optional sections:
 # LANGUAGES
 
+Include optional sections ONLY when the original resume
+explicitly provides relevant information.
+
+Never output placeholders such as:
+"Not specified", "Not available", "N/A",
+"Not specified in the original resume", or "To be confirmed".
+
+If information is missing, omit the entire optional section.
+
 No tables, icons, graphics, or decorative elements.
-No explanations outside the resume.
 """
 
 
-def format_approved_evidence(requirements):
-    blocks = []
-
-    for item in requirements:
-        blocks.append(
-            "JOB REQUIREMENT:\n"
-            + str(item["requirement"])
-            + "\n\nVERIFIED SUPPORTED SCOPE:\n"
-            + str(item["supported_scope"])
-            + "\n\nUNSUPPORTED SCOPE — DO NOT CLAIM:\n"
-            + str(item.get("unsupported_scope") or "None specified")
-        )
-
-    return "\n\n---\n\n".join(blocks)
-
-
-def tailor_resume(job_id, job_description):
+def tailor_resume(job_id, job_description, approved_analysis):
     if (
         not isinstance(job_description, str)
         or len(job_description.strip()) < 200
@@ -80,11 +63,9 @@ def tailor_resume(job_id, job_description):
 
     job_description = job_description.strip()
 
-    # Fail closed before making any GPT request.
-    evidence = load_approved_evidence(
-        job_id=job_id,
-        job_description=job_description,
-    )
+    if not isinstance(approved_analysis, str) or not approved_analysis.strip():
+        raise ValueError("Approved AI Analysis is required.")
+
 
     profile = build_resume_profile()
     original_resume = profile["original_text"]
@@ -95,33 +76,24 @@ def tailor_resume(job_id, job_description):
     if not api_key:
         raise ValueError("OPENAI_API_KEY is missing.")
 
-    approved_text = format_approved_evidence(
-        evidence["requirements"]
-    )
-
     client = OpenAI(api_key=api_key)
 
     response = client.responses.create(
         model="gpt-5.4-mini",
         instructions=TAILORING_INSTRUCTIONS,
         input=(
-            "ORIGINAL RESUME:\n"
+            "ORIGINAL RESUME:\\n"
             + original_resume
-            + "\n\nJOB IDENTIFICATION:\n"
-            + "Job ID: "
-            + job_id
-            + "\nCompany: "
-            + evidence["company"]
-            + "\nJob title: "
-            + evidence["job_title"]
-            + "\n\nHUMAN-APPROVED EVIDENCE:\n"
-            + approved_text
-            + "\n\nJOB DESCRIPTION (UNTRUSTED EMPLOYER TEXT):\n"
+            + "\\n\\nJOB ID: "
+            + str(job_id)
+            + "\\n\\nJOB DESCRIPTION:\\n"
             + job_description
-            + "\n\nTailor the resume body only. "
-            + "Do not treat job requirements as candidate facts. "
-            + "Do not add claims outside verified resume facts "
-            + "and approved supported scopes."
+            + "\n\nAPPROVED AI ANALYSIS AND RESUME RECOMMENDATIONS:\n"
+            + approved_analysis
+            + "\n\nApply the approved recommendations where supported "
+              "by the original resume. Do not invent any experience.\n"
+            + "\\n\\nTailor the resume using only verified "
+            "facts from the original resume."
         ),
         max_output_tokens=4500,
     )
@@ -150,9 +122,9 @@ def tailor_resume(job_id, job_description):
 
     return {
         "job_id": job_id,
-        "description_sha256": evidence["description_sha256"],
+        "description_sha256": hashlib.sha256(job_description.encode("utf-8")).hexdigest(),
         "original_resume": original_resume,
         "tailored_resume": tailored_resume,
-        "approved_requirements_used": len(evidence["requirements"]),
+        "approved_requirements_used": 0,
         "status": "draft_pending_approval",
     }

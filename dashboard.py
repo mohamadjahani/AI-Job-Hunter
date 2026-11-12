@@ -21,7 +21,6 @@ from matching.job_workspace import (
     get_job_directory,
     verify_job_workspace,
 )
-from matching.approved_evidence_loader import load_approved_evidence
 from matching.resume_tailor import tailor_resume
 
 
@@ -254,6 +253,41 @@ st.markdown(
 
 .stApp [data-testid="stExpander"] summary * {
     color: #173c85 !important;
+}
+
+
+/* Base Resume Upload — light theme */
+[data-testid="stFileUploader"] section {
+    background-color: #EAF2FF !important;
+    border: 2px dashed #2563EB !important;
+    border-radius: 12px !important;
+}
+
+[data-testid="stFileUploader"] section button {
+    background-color: #2563EB !important;
+    color: #FFFFFF !important;
+    border: 1px solid #2563EB !important;
+    border-radius: 8px !important;
+}
+
+[data-testid="stFileUploader"] section button:hover {
+    background-color: #1D4ED8 !important;
+    color: #FFFFFF !important;
+}
+
+[data-testid="stFileUploader"] section,
+[data-testid="stFileUploader"] section * {
+    color: #17365D;
+}
+
+
+/* White text and icon on Upload button */
+[data-testid="stFileUploader"] section button,
+[data-testid="stFileUploader"] section button *,
+[data-testid="stFileUploader"] section button svg {
+    color: #FFFFFF !important;
+    fill: none !important;
+    stroke: #FFFFFF !important;
 }
 
 </style>
@@ -497,6 +531,7 @@ def render_resume_workflow(
     job_id,
     description,
     view="saved",
+    analysis=None,
 ):
     """
     Generate and review a tailored resume.
@@ -508,26 +543,51 @@ def render_resume_workflow(
         description or ""
     ).strip()
 
-    try:
-        evidence = load_approved_evidence(
-            job_id,
-            description,
-        )
-    except (
-        ValueError,
-        FileNotFoundError,
-        KeyError,
-        TypeError,
-        json.JSONDecodeError,
-    ):
-        st.caption(
-            "Resume generation requires "
-            "human-approved evidence for "
-            "this exact job description."
-        )
+    if len(description) < 200:
+        st.warning("A complete job description is required.")
         return
 
     folder = get_job_directory(job_id)
+
+    approval_path = folder / "analysis_approval.json"
+    approval_hash = hashlib.sha256(
+        (description + "\n" + (analysis or "")).encode("utf-8")
+    ).hexdigest()
+
+    approved = False
+
+    if analysis:
+        try:
+            record = json.loads(
+                approval_path.read_text(encoding="utf-8")
+            )
+            approved = (
+                record.get("job_id") == job_id
+                and record.get("approval_hash") == approval_hash
+            )
+        except (OSError, ValueError, TypeError):
+            pass
+
+        if not approved:
+            if st.button(
+                "✅ Approve Analysis",
+                key=f"approve_analysis_{view}_{job_id}",
+            ):
+                approval_path.write_text(
+                    json.dumps({
+                        "job_id": job_id,
+                        "approval_hash": approval_hash,
+                        "analysis": analysis,
+                    }, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+                st.rerun()
+            return
+
+        st.success("AI Analysis approved.")
+    else:
+        st.info("Run AI Analysis before generating a resume.")
+        return
 
     draft_path = (
         folder / "tailored_resume_DRAFT.md"
@@ -541,13 +601,94 @@ def render_resume_workflow(
         "### 📄 Tailored Resume"
     )
 
-    st.caption(
-        "Approved evidence: "
-        f"{len(evidence['requirements'])} "
-        "requirement(s)"
+    st.caption("Uses verified facts from your original resume.")
+
+    draft_marker = folder / "resume_analysis_hash.txt"
+
+    base_resume_path = (
+        Path(__file__).resolve().parent
+        / "resume/Jahani_ATS_Resume.pdf"
+    )
+    base_resume_hash = hashlib.sha256(
+        base_resume_path.read_bytes()
+    ).hexdigest()
+
+    resume_hash_marker = folder / "resume_base_hash.txt"
+    saved_resume_hash = (
+        resume_hash_marker.read_text(encoding="utf-8").strip()
+        if resume_hash_marker.is_file()
+        else None
     )
 
-    # Generate only when no draft exists.
+    base_resume_changed = (
+        draft_path.is_file()
+        and saved_resume_hash != base_resume_hash
+    )
+
+    if base_resume_changed:
+        st.warning(
+            "Base Resume has changed or this draft predates "
+            "resume version tracking. Regeneration is recommended."
+        )
+
+    draft_valid = (
+        draft_path.is_file()
+        and draft_marker.is_file()
+        and draft_marker.read_text(encoding="utf-8").strip()
+        == approval_hash
+    )
+
+    if draft_path.is_file() and not draft_valid:
+        st.warning(
+            "This resume was generated from an earlier analysis. "
+            "You can preview and download it, but review its "
+            "content before applying."
+        )
+
+    if draft_path.is_file() and (base_resume_changed or not draft_valid):
+        if st.button(
+            "🔄 Regenerate Tailored Resume (uses API)",
+            key=f"regenerate_resume_{view}_{job_id}",
+        ):
+            from datetime import datetime as ResumeDateTime
+
+            with st.spinner("Regenerating from the active Base Resume..."):
+                try:
+                    result = tailor_resume(
+                        job_id=job_id,
+                        job_description=description,
+                        approved_analysis=analysis,
+                    )
+
+                    if result.get("status") != "draft_pending_approval":
+                        raise ValueError("Unexpected resume status.")
+
+                    new_draft = result["tailored_resume"]
+                    if not new_draft.strip():
+                        raise ValueError("Generated resume is empty.")
+
+                    backup_dir = folder / "resume_backups"
+                    backup_dir.mkdir(parents=True, exist_ok=True)
+                    backup_path = backup_dir / (
+                        "tailored_resume_"
+                        + ResumeDateTime.now().strftime("%Y%m%d_%H%M%S_%f")
+                        + ".md"
+                    )
+
+                    backup_path.write_bytes(draft_path.read_bytes())
+                    draft_path.write_text(new_draft, encoding="utf-8")
+
+                    draft_marker.write_text(approval_hash, encoding="utf-8")
+                    resume_hash_marker.write_text(
+                        base_resume_hash, encoding="utf-8"
+                    )
+
+                    st.success("Resume regenerated. Previous draft backed up.")
+                    st.rerun()
+
+                except Exception as error:
+                    st.error(f"Resume regeneration failed: {error}")
+
     if not draft_path.is_file():
 
         if st.button(
@@ -561,6 +702,7 @@ def render_resume_workflow(
                     result = tailor_resume(
                         job_id=job_id,
                         job_description=description,
+                        approved_analysis=analysis,
                     )
 
                     if (
@@ -580,6 +722,11 @@ def render_resume_workflow(
                         output.write(
                             result["tailored_resume"]
                         )
+
+                    draft_marker.write_text(
+                        approval_hash,
+                        encoding="utf-8",
+                    )
 
                     st.success(
                         "Draft saved. "
@@ -622,102 +769,16 @@ def render_resume_workflow(
     ):
         st.markdown(draft)
 
+    from resume.pdf_export import resume_to_pdf
+
     st.download_button(
-        "⬇️ Download Resume (Markdown)",
-        data=draft,
-        file_name=(
-            f"{job_id}_tailored_resume_DRAFT.md"
-        ),
-        mime="text/markdown",
+        "⬇️ Download Resume (PDF)",
+        data=resume_to_pdf(draft),
+        file_name=f"{job_id}_tailored_resume.pdf",
+        mime="application/pdf",
         key=f"download_resume_{view}_{job_id}",
     )
 
-    # Read any existing human decision.
-    review = {}
-
-    if review_path.is_file():
-        try:
-            review = json.loads(
-                review_path.read_text(
-                    encoding="utf-8"
-                )
-            )
-        except (
-            ValueError,
-            OSError,
-        ):
-            st.warning(
-                "Existing review record "
-                "cannot be read."
-            )
-            return
-
-    valid_review = (
-        review.get("job_id") == job_id
-        and review.get("description_sha256")
-        == evidence["description_sha256"]
-        and review.get("draft_sha256")
-        == draft_hash
-        and review.get("status")
-        in ("approved", "rejected")
-    )
-
-    if valid_review:
-        st.info(
-            "Review status: "
-            f"{review['status'].upper()}"
-        )
-    elif review_path.exists():
-        st.warning(
-            "Draft or job description changed; "
-            "previous review is no longer valid."
-        )
-
-    col_a, col_b = st.columns(2)
-
-    decision = None
-
-    with col_a:
-        if st.button(
-            "✅ Approve Resume",
-            key=f"approve_resume_{view}_{job_id}",
-        ):
-            decision = "approved"
-
-    with col_b:
-        if st.button(
-            "❌ Reject Resume",
-            key=f"reject_resume_{view}_{job_id}",
-        ):
-            decision = "rejected"
-
-    if decision:
-        record = {
-            "job_id": job_id,
-            "description_sha256": evidence[
-                "description_sha256"
-            ],
-            "draft_sha256": draft_hash,
-            "status": decision,
-            "reviewed_at": datetime.now(
-                timezone.utc
-            ).isoformat(),
-        }
-
-        review_path.write_text(
-            json.dumps(
-                record,
-                indent=2,
-            ) + "\n",
-            encoding="utf-8",
-        )
-
-        st.success(
-            f"Review saved: {decision}. "
-            "No job application was sent."
-        )
-
-        st.rerun()
 
 
 # -------------------- HEADER --------------------
@@ -760,6 +821,71 @@ if scan:
             st.error(
                 f"Gmail scan failed: {error}"
             )
+
+
+
+# -------------------- BASE RESUME MANAGER --------------------
+
+with st.expander("📄 Upload Base Resume"):
+    from io import BytesIO
+    from datetime import datetime as ResumeDateTime
+    from pypdf import PdfReader
+
+    uploaded_resume = st.file_uploader(
+        "Upload your updated base resume (PDF)",
+        type=["pdf"],
+        key="base_resume_upload",
+    )
+
+    if uploaded_resume is not None:
+        resume_bytes = uploaded_resume.getvalue()
+
+        try:
+            reader = PdfReader(BytesIO(resume_bytes))
+            extracted = "\\n".join(
+                page.extract_text() or ""
+                for page in reader.pages
+            )
+
+            if not extracted.strip():
+                raise ValueError("PDF has no extractable text.")
+
+            if len(extracted.strip()) < 100:
+                raise ValueError(
+                    "Resume text is too short to validate."
+                )
+
+            st.success(
+                f"PDF validated. {len(reader.pages)} pages, "
+                "Text extraction successful."
+            )
+
+            if st.button("✅ Set as Active Base Resume"):
+                target = Path(__file__).resolve().parent / (
+                    "resume/Jahani_ATS_Resume.pdf"
+                )
+                target.parent.mkdir(parents=True, exist_ok=True)
+
+                if target.exists():
+                    backup_dir = target.parent / "backups"
+                    backup_dir.mkdir(exist_ok=True)
+                    backup = backup_dir / (
+                        "base_resume_"
+                        + ResumeDateTime.now().strftime(
+                            "%Y%m%d_%H%M%S_%f"
+                        )
+                        + ".pdf"
+                    )
+                    backup.write_bytes(target.read_bytes())
+
+                target.write_bytes(resume_bytes)
+
+                st.success(
+                    "Active Base Resume updated successfully."
+                )
+
+        except Exception as error:
+            st.error(f"Resume validation failed: {error}")
 
 
 # -------------------- JOB LIST --------------------
@@ -1066,6 +1192,7 @@ if jobs:
                     key,
                     description,
                     view="listing",
+                    analysis=analysis,
                 )
 
     with st.expander(

@@ -35,11 +35,35 @@ def build_resume_profile():
     matches = list(re.finditer(pattern, text))
 
     if not matches:
-        raise ValueError(
-            "No resume sections found. Check PDF extraction."
-        )
+        profile["header"] = "\n".join(
+            text.splitlines()[:4]
+        ).strip()
+        profile["sections"]["FULL RESUME"] = text
+        return profile
 
     profile["header"] = text[:matches[0].start()].strip()
+
+    # Keep only identity/contact lines in the header.
+    # Some uploaded PDFs use headings not listed in SECTION_NAMES.
+    header_lines = profile["header"].splitlines()
+    stop_headings = {
+        "PROFESSIONAL SUMMARY",
+        "PROFESSIONAL PROFILE",
+        "TECHNICAL SKILLS",
+        "TECHNICAL & PROFESSIONAL SKILLS",
+        "WORK EXPERIENCE",
+        "PROFESSIONAL EXPERIENCE",
+        "EDUCATION",
+        "EDUCATION & CERTIFICATES",
+    }
+
+    clean_header = []
+    for line in header_lines:
+        if line.strip().upper().lstrip("# ").rstrip(":") in stop_headings:
+            break
+        clean_header.append(line)
+
+    profile["header"] = "\n".join(clean_header).strip()
 
     for index, match in enumerate(matches):
         section_name = match.group(1)
